@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import os
 from sklearn.model_selection import train_test_split
+import argparse
 # Removed plotting and chi2 imports from this setup module (not used here)
 
 # Set random seed for reproducibility
@@ -184,27 +185,40 @@ class DataLoader:
 
 # Main execution block that executes the setup process by loading, exploring, and preparing the dataset for our Random Forest training.
 if __name__ == "__main__":
-    
+
+    parser = argparse.ArgumentParser(description="Project setup and data caching utilities")
+    parser.add_argument("--rebuild-cache", action="store_true",
+                        help="Force rebuilding parquet cache from CSVs (reads CSV and rewrites parquet)")
+    parser.add_argument("--nrows", type=int, default=None,
+                        help="Optional: number of rows to read from CSV (useful for quick dev runs)")
+
+    args = parser.parse_args()
+
     current_script_path = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(current_script_path)  
+    project_root = os.path.dirname(current_script_path)
     DATA_FOLDER = os.path.join(project_root, "data")
-    
-    print("="*50)
+
+    print("=" * 50)
     print("DATA LOADING")
     print(f"Looking for data in: {DATA_FOLDER}")
-    
-    # Initialize data loader
-    loader = DataLoader(DATA_FOLDER)
-    
-    # Load the data and explore the data
+
+    # If rebuild-cache is requested, we disable automatic parquet-loading
+    # so load_data() reads CSVs; after load we explicitly save the parquet.
+    loader = DataLoader(DATA_FOLDER, nrows=args.nrows, use_parquet=not args.rebuild_cache)
+
     if loader.load_data():
         data_head = loader.explore_data()
         print("\nFirst 5 rows of training data:")
         print(data_head)
-        
+
+        # If rebuild-cache was requested, ensure we write the parquet cache now
+        if args.rebuild_cache:
+            print("Rebuilding parquet cache from CSVs...")
+            loader.save_clean()
+
         # Prepare data for training
         X_train, X_val, y_train, y_val = loader.prepare_data_for_training()
-        
+
         print("\n Data loaded and ready for processing!")
     else:
         print("\n Failed to load data.")
