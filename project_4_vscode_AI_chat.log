@@ -3,7 +3,7 @@ Date: December 6, 2025
 
 SESSION SUMMARY
 ===============
-This chat log documents a comprehensive refactoring and optimization session for the unm_ML_Test Machine Learning project. The session focused on code quality improvements, runtime optimization, and establishing best practices for data caching.
+This chat log documents a comprehensive refactoring and optimization session for the unm_ML_Test Machine Learning project. The session focused on code quality improvements, runtime optimization, data caching, and error resolution.
 
 KEY ACCOMPLISHMENTS
 ===================
@@ -36,15 +36,17 @@ KEY ACCOMPLISHMENTS
      - 0a31f5a (cast categorical dtypes before saving)
      - cdb43be (add CLI flags for rebuild-cache and nrows)
 
-4. Deprecation Fix - scripts/fraud_detection.py
+4. Deprecation Fixes & Categorical Dtype Handling
    - Fixed deprecated is_categorical_dtype check with isinstance(..., pd.CategoricalDtype)
-   - Updated to use DataLoader parquet cache
+   - Updated to use DataLoader parquet cache in fraud_detection.py
    - Refactored prepare_data() to avoid duplicated preprocessing
-   - Fixed categorical dtype handling in fillna operation (TypeError fix)
+   - Fixed TypeError on categorical dtype fillna operations (training data)
+   - Fixed TypeError on categorical dtype fillna operations (test data)
    - Commits:
      - c59d8d8 (use DataLoader cache, avoid duplicated preprocessing)
      - a11fc30 (replace deprecated is_categorical_dtype)
-     - 2f3a284 (fix categorical dtype fillna error)
+     - 2f3a284 (fix categorical dtype fillna in training data)
+     - d6bf11d (fix categorical dtype fillna in test data)
 
 5. Data Caching Integration
    - Updated scripts/random_forest.py to prefer DataLoader parquet cache
@@ -113,10 +115,13 @@ Data Flow:
 5. Lightweight preprocessing (fillna numeric, encode categorical->codes)
 6. Consistent feature pipeline across all scripts
 
-Type Handling:
+Type Handling - CRITICAL FIX:
 - Categorical columns: stored as category dtype, converted to codes (int) before use
-- Numeric columns: fillna(0) applied after categorical conversion
+- fillna() must be applied AFTER converting categorical->codes (not before)
+- Numeric columns: fillna(0) applied only after categorical conversion
 - Object dtype columns: converted to categorical codes on first encounter
+- This prevents TypeError: "Cannot setitem on a Categorical with a new category"
+- Applied consistently to both training data and test data preprocessing
 
 Caching Strategy:
 - train_clean.parquet and test_clean.parquet stored in data/ folder
@@ -137,6 +142,8 @@ a11fc30 - fix: replace deprecated is_categorical_dtype with isinstance(..., pd.C
 2f3a284 - fix: handle categorical dtypes before fillna to avoid TypeError
 7f6ba4e - random_forest: prefer DataLoader parquet cache when available; fallback to synthetic data
 aefbb1e - decision_tree: prefer DataLoader parquet cache when available; fallback to synthetic data
+f42b445 - docs: save comprehensive chat log documenting refactoring session
+d6bf11d - fix: handle categorical dtypes in test data preprocessing
 
 RECOMMENDATIONS FOR FUTURE WORK
 ================================
