@@ -1,0 +1,9 @@
+# Generated from imports in scripts/ — suitable for creating a venv
+# Minimal, conservative version pins. Adjust as needed for your environment.
+numpy>=1.21
+pandas>=1.3
+scipy>=1.7
+scikit-learn>=1.0
+matplotlib>=3.5
+seaborn>=0.11
+joblib>=1.1
