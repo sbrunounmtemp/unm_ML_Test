@@ -7,3 +7,4 @@ scikit-learn>=1.0
 matplotlib>=3.5
 seaborn>=0.11
 joblib>=1.1
+pyarrow>=6.0.0
