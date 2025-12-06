@@ -1,0 +1,51 @@
+project1_random_forest$ ./scripts/project_setup.py 
+==================================================
+DATA LOADING
+Looking for data in: /home/sbruno/unm/class/fall_2025/cs529/machine_learning_proj1/project1_random_forest/data
+Training data loaded successfully: (472432, 27)
+Test data loaded successfully: (118108, 26)
+Sample submission loaded successfully: (118108, 2)
+
+==================================================
+DATA EXPLORATION SUMMARY
+==================================================
+
+1. Dataset Shape:
+   Training samples: 472432
+   Test samples: 118108
+   Number of features: 25
+
+2. Target Variable Distribution (isFraud):
+   Non-Fraud (0): 455902 (96.50%)
+   Fraud (1): 16530 (3.50%)
+   Class Imbalance Ratio: 1:27.6
+
+3. Missing Values in Training Data:
+   No missing values found
+
+4. Data Types:
+   Numeric features: 19
+   String features: 8
+
+5. Feature Columns:
+   All columns: ['TransactionID', 'ProductCD', 'card1', 'card2', 'card3', 'card4', 'card5', 'card6', 'addr1', 'addr2'] ...
+   Categorical features specified: ['ProductCD', 'card1', 'card2', 'card3', 'card4', 'card5', 'card6', 'addr1', 'addr2']
+
+First 5 rows of training data:
+   TransactionID ProductCD  card1  card2  card3       card4  card5   card6     addr1     addr2  TransactionDT  ...     C5    C6   C7   C8    C9  C10    C11  C12    C13    C14  isFraud
+0              1         C   5812  408.0  185.0  mastercard  224.0   debit  NotFound  NotFound       11844610  ...    0.0   1.0  1.0  1.0   0.0  0.0    1.0  1.0    1.0    1.0        0
+1              2         W  12577  268.0  150.0        visa  166.0   debit     123.0      87.0       12274010  ...  123.0  94.0  0.0  0.0  85.0  0.0  104.0  0.0  457.0  120.0        0
+2              3         H  12581  453.0  150.0        visa  226.0   debit     272.0      87.0        1343827  ...    0.0   1.0  0.0  1.0   0.0  1.0    1.0  0.0    1.0    1.0        0
+3              4         W   8139  327.0  150.0    discover  194.0  credit     204.0      87.0       15034938  ...    0.0   2.0  0.0  0.0   2.0  0.0    3.0  0.0   18.0    6.0        0
+4              5         W  16132  111.0  150.0        visa  226.0   debit     220.0      87.0       14680707  ...    0.0   2.0  0.0  0.0   1.0  0.0    1.0  0.0   28.0    1.0        0
+
+[5 rows x 27 columns]
+
+ Data Split Complete:
+  Training set: (377945, 25)
+  Validation set: (94487, 25)
+  Training fraud rate: 3.50%
+  Validation fraud rate: 3.50%
+
+ Data loaded and ready for processing!
+
