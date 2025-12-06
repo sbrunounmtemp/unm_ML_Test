@@ -20,24 +20,42 @@ from random_forest import RandomForest
 
 # Function to prepare the dataset for use in training and testing.
 def prepare_data(loader):
+    """Prepare features and target from the loader.
+
+    Uses cached data when available. Performs lightweight preprocessing only
+    (fillna, convert object/categorical cols to codes). Avoids re-encoding
+    numeric columns or re-doing work that may be handled by `DataLoader`.
+    """
     print("\n Preparing data...")
-    
-    # Get features
-    feature_columns = [col for col in loader.train_data.columns 
-                      if col not in ['TransactionID', 'isFraud']]
-    
-    X = loader.train_data[feature_columns].copy()
-    y = loader.train_data['isFraud'].values
-    
-    # Simple preprocessing
+
+    # Use DataLoader's train_data directly
+    df = loader.train_data
+    if df is None:
+        raise ValueError("Train data not loaded. Call loader.load_data() first.")
+
+    # Determine feature columns (exclude IDs and target)
+    feature_columns = [col for col in df.columns if col not in ['TransactionID', 'isFraud']]
+
+    X = df[feature_columns].copy()
+    y = df['isFraud'].values
+
+    # Lightweight preprocessing: fill missing values
     X = X.fillna(0)
-    
-    # Convert categorical features
-    categorical_features = ['ProductCD', 'card1', 'card2', 'card3', 'card4', 'card5', 'card6', 'addr1', 'addr2']
+
+    # Use categorical features list from loader if present
+    categorical_features = getattr(loader, 'categorical_features', [])
+
+    # Convert only object or category dtypes to integer codes; skip numeric columns
     for col in categorical_features:
         if col in X.columns:
-            X[col] = pd.Categorical(X[col]).codes
-    
+            if pd.api.types.is_categorical_dtype(X[col]):
+                X[col] = X[col].cat.codes
+            elif X[col].dtype == object:
+                X[col] = pd.Categorical(X[col]).codes
+            else:
+                # numeric types left as-is (often already encoded)
+                pass
+
     return X, y, categorical_features
 
 # Function to run the full fraud detection: loads data, trains our Random Forest, compares with scikit-learn, and generates a submission file.
@@ -52,7 +70,8 @@ def main():
     project_root = os.path.dirname(current_dir)
     data_folder = os.path.join(project_root, "data")
     
-    loader = DataLoader(data_folder)
+    # Prefer parquet cache when available (DataLoader defaults to use_parquet=True)
+    loader = DataLoader(data_folder, use_parquet=True)
     if not loader.load_data():
         return
     
