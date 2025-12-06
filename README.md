@@ -24,6 +24,27 @@ python3 scripts/project_setup.py
 
 3. Run individual scripts in the `scripts/` directory to generate specific results.
 
+## Parquet cache and dev tips
+- To rebuild the parquet cache from the original CSV files (force CSV read and rewrite parquet):
+
+```
+python3 scripts/project_setup.py --rebuild-cache
+```
+
+- To load only a subset of rows (useful for fast development/testing):
+
+```
+python3 scripts/project_setup.py --nrows 10000
+```
+
+- Recommended venv setup:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
 ## File Manifest
 - `EXAMPLE` — Example output from running on Linux
 - `README.md` — This file
