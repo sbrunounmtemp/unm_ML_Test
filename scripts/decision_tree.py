@@ -13,6 +13,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from information_gain import InformationGainMeasures
 from chi_square_test import ChiSquareTest
+from project_setup import DataLoader
 
 
 # Class that represents a singl node in the decision tree.
@@ -470,33 +471,57 @@ class DecisionTree:
 
 # Function to evaluate the decision tree on synthetic fraud data by testing different split criteria, chi-square thresholds, and reporting performance metrics.
 def test_decision_tree():
-    
     print("\n" + "="*70)
     print("TESTING DECISION TREE IMPLEMENTATION")
     print("="*70)
-    
-    # Create synthetic fraud detection data
-    np.random.seed(42)
-    n_samples = 1000
-    n_features = 5
-    
-    # Generate features
-    X = pd.DataFrame({
-        'transaction_amount': np.random.exponential(50, n_samples),
-        'days_since_last': np.random.randint(0, 30, n_samples),
-        'num_transactions': np.random.poisson(3, n_samples),
-        'merchant_risk': np.random.uniform(0, 1, n_samples),
-        'hour_of_day': np.random.randint(0, 24, n_samples)
-    })
-    
-    # Generate labels
-    fraud_probability = (
-        (X['transaction_amount'] > 200) * 0.3 +
-        (X['days_since_last'] < 1) * 0.2 +
-        (X['num_transactions'] > 5) * 0.2 +
-        (X['merchant_risk'] > 0.7) * 0.3
-    )
-    y = (np.random.random(n_samples) < fraud_probability).astype(int)
+
+    # Try to use real dataset (cached parquet) if available, otherwise fall back to synthetic data
+    current_script_path = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_script_path)
+    data_folder = os.path.join(project_root, 'data')
+
+    loader = DataLoader(data_folder, use_parquet=True)
+    X = None
+    y = None
+    try:
+        if loader.load_data():
+            df = loader.train_data
+            feature_columns = [col for col in df.columns if col not in ['TransactionID', 'isFraud']]
+            X = df[feature_columns].copy().fillna(0)
+            for col in loader.categorical_features:
+                if col in X.columns:
+                    if isinstance(X[col].dtype, pd.CategoricalDtype):
+                        X[col] = X[col].cat.codes
+                    elif X[col].dtype == object:
+                        X[col] = pd.Categorical(X[col]).codes
+            y = df['isFraud'].values
+            print(f"Loaded real dataset: {X.shape}, fraud rate: {np.mean(y)*100:.2f}%")
+    except Exception:
+        X = None
+
+    if X is None:
+        # Create synthetic fraud detection data
+        np.random.seed(42)
+        n_samples = 1000
+        n_features = 5
+
+        # Generate features
+        X = pd.DataFrame({
+            'transaction_amount': np.random.exponential(50, n_samples),
+            'days_since_last': np.random.randint(0, 30, n_samples),
+            'num_transactions': np.random.poisson(3, n_samples),
+            'merchant_risk': np.random.uniform(0, 1, n_samples),
+            'hour_of_day': np.random.randint(0, 24, n_samples)
+        })
+
+        # Generate labels
+        fraud_probability = (
+            (X['transaction_amount'] > 200) * 0.3 +
+            (X['days_since_last'] < 1) * 0.2 +
+            (X['num_transactions'] > 5) * 0.2 +
+            (X['merchant_risk'] > 0.7) * 0.3
+        )
+        y = (np.random.random(n_samples) < fraud_probability).astype(int)
     
     print(f"Dataset created: {n_samples} samples, {np.sum(y)} fraud cases ({np.mean(y)*100:.1f}%)")
     
