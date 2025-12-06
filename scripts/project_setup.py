@@ -36,27 +36,54 @@ class DataLoader:
     # Function to Load the training, testing, and sample submission datasets into memory for analysis.    
     def load_data(self):
        
+        # Try to load preprocessed parquet files first (fast), unless disabled
+        train_path = os.path.join(self.data_folder_path, 'train.csv')
+        test_path = os.path.join(self.data_folder_path, 'test.csv')
+        sample_sub_path = os.path.join(self.data_folder_path, 'sample_sub.csv')
+
         try:
-            # Load training data
-            train_path = os.path.join(self.data_folder_path, 'train.csv')
-            self.train_data = pd.read_csv(train_path)
-            print(f"Training data loaded successfully: {self.train_data.shape}")
-            
-            # Load test data
-            test_path = os.path.join(self.data_folder_path, 'test.csv')
-            self.test_data = pd.read_csv(test_path)
-            print(f"Test data loaded successfully: {self.test_data.shape}")
-            
-            # Load sample submission
-            sample_sub_path = os.path.join(self.data_folder_path, 'sample_sub.csv')
+            if self.use_parquet and os.path.exists(self.parquet_train) and os.path.exists(self.parquet_test):
+                self.train_data = pd.read_parquet(self.parquet_train)
+                self.test_data = pd.read_parquet(self.parquet_test)
+                print(f"Loaded cached parquet files: {self.train_data.shape}, {self.test_data.shape}")
+            else:
+                # Read CSVs with optional nrows and safer memory usage
+                dtype_map = {}
+                # Keep dtype_map minimal here; extend if you know actual column types
+                self.train_data = pd.read_csv(train_path, nrows=self.nrows, dtype=dtype_map, low_memory=False)
+                print(f"Training data loaded successfully: {self.train_data.shape}")
+
+                self.test_data = pd.read_csv(test_path, nrows=self.nrows, dtype=dtype_map, low_memory=False)
+                print(f"Test data loaded successfully: {self.test_data.shape}")
+
+                # Optionally save to parquet for faster subsequent loads
+                if self.use_parquet:
+                    try:
+                        self.save_clean()
+                    except Exception:
+                        pass
+
+            # Load sample submission (small file)
             self.sample_submission = pd.read_csv(sample_sub_path)
             print(f"Sample submission loaded successfully: {self.sample_submission.shape}")
-            
+
             return True
-            
+
         except Exception as e:
             print(f"Error loading data: {e}")
             return False
+
+    def save_clean(self):
+        """Persist cleaned train/test datasets to parquet for faster reloads."""
+        try:
+            # Only save if dataframes are present
+            if self.train_data is not None:
+                self.train_data.to_parquet(self.parquet_train, index=False)
+            if self.test_data is not None:
+                self.test_data.to_parquet(self.parquet_test, index=False)
+            print("Saved cleaned datasets to parquet.")
+        except Exception as e:
+            print(f"Failed to save parquet files: {e}")
     
     # Function to perform preliminary exploration of the training dataset to check its structure and readiness for analysis.
     def explore_data(self):
