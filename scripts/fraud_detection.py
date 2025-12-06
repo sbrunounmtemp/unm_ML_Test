@@ -48,7 +48,8 @@ def prepare_data(loader):
     # Convert only object or category dtypes to integer codes; skip numeric columns
     for col in categorical_features:
         if col in X.columns:
-            if pd.api.types.is_categorical_dtype(X[col]):
+            # Use isinstance check for categorical dtype (avoid deprecated API)
+            if isinstance(X[col].dtype, pd.CategoricalDtype):
                 X[col] = X[col].cat.codes
             elif X[col].dtype == object:
                 X[col] = pd.Categorical(X[col]).codes
