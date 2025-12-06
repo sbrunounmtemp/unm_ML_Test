@@ -168,11 +168,17 @@ def main():
     X_test = loader.test_data[feature_columns].copy()
     test_ids = loader.test_data['TransactionID']
     
-    # Preprocess test data
-    X_test = X_test.fillna(0)
+    # Preprocess test data: convert categorical columns to codes first, then fill numeric NaNs
     for col in categorical_features:
         if col in X_test.columns:
-            X_test[col] = pd.Categorical(X_test[col]).codes
+            if isinstance(X_test[col].dtype, pd.CategoricalDtype):
+                X_test[col] = X_test[col].cat.codes
+            elif X_test[col].dtype == object:
+                X_test[col] = pd.Categorical(X_test[col]).codes
+    
+    # Fill NaNs only on numeric columns (after categorical->codes conversion)
+    numeric_cols = X_test.select_dtypes(include=['number']).columns
+    X_test[numeric_cols] = X_test[numeric_cols].fillna(0)
     
     # Make predictions with sklearn model
     test_predictions = sklearn_rf.predict(X_test)
