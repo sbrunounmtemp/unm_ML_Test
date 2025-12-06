@@ -6,9 +6,7 @@ import pandas as pd
 import numpy as np
 import os
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy.stats import chi2
+# Removed plotting and chi2 imports from this setup module (not used here)
 
 # Set random seed for reproducibility
 RANDOM_SEED = 42
@@ -17,14 +15,18 @@ np.random.seed(RANDOM_SEED)
 
 # Class to handle all data loading and preprocessing operations.
 class DataLoader:
-    
-    # Function to set the dataset path, initializes data placeholders, and specifies categorical features our the project.
-    def __init__(self, data_folder_path):
+
+    # Function to set the dataset path, initializes data placeholders, and specifies categorical features for the project.
+    def __init__(self, data_folder_path, nrows=None, use_parquet=True):
 
         self.data_folder_path = data_folder_path
         self.train_data = None
         self.test_data = None
         self.sample_submission = None
+        self.nrows = nrows
+        self.use_parquet = use_parquet
+        self.parquet_train = os.path.join(self.data_folder_path, 'train_clean.parquet')
+        self.parquet_test = os.path.join(self.data_folder_path, 'test_clean.parquet')
         self.categorical_features = [
             'ProductCD', 
             'card1', 'card2', 'card3', 'card4', 'card5', 'card6',
