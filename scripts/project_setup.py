@@ -76,12 +76,31 @@ class DataLoader:
     def save_clean(self):
         """Persist cleaned train/test datasets to parquet for faster reloads."""
         try:
+            # Cast known categorical columns to pandas 'category' dtype so parquet
+            # stores categorical information and future loads preserve dtypes.
+            for col in self.categorical_features:
+                if self.train_data is not None and col in self.train_data.columns:
+                    try:
+                        if not isinstance(self.train_data[col].dtype, pd.CategoricalDtype):
+                            self.train_data[col] = self.train_data[col].astype('category')
+                    except Exception:
+                        # If casting fails for any reason, continue without stopping save
+                        pass
+
+                if self.test_data is not None and col in self.test_data.columns:
+                    try:
+                        if not isinstance(self.test_data[col].dtype, pd.CategoricalDtype):
+                            self.test_data[col] = self.test_data[col].astype('category')
+                    except Exception:
+                        pass
+
             # Only save if dataframes are present
             if self.train_data is not None:
                 self.train_data.to_parquet(self.parquet_train, index=False)
             if self.test_data is not None:
                 self.test_data.to_parquet(self.parquet_test, index=False)
-            print("Saved cleaned datasets to parquet.")
+
+            print("Saved cleaned datasets to parquet (categorical dtypes applied where available).")
         except Exception as e:
             print(f"Failed to save parquet files: {e}")
     
