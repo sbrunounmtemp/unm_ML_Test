@@ -39,9 +39,6 @@ def prepare_data(loader):
     X = df[feature_columns].copy()
     y = df['isFraud'].values
 
-    # Lightweight preprocessing: fill missing values
-    X = X.fillna(0)
-
     # Use categorical features list from loader if present
     categorical_features = getattr(loader, 'categorical_features', [])
 
@@ -56,6 +53,11 @@ def prepare_data(loader):
             else:
                 # numeric types left as-is (often already encoded)
                 pass
+
+    # Lightweight preprocessing: fill missing values only on numeric columns
+    # (after categorical -> codes conversion, so codes can be filled with 0)
+    numeric_cols = X.select_dtypes(include=['number']).columns
+    X[numeric_cols] = X[numeric_cols].fillna(0)
 
     return X, y, categorical_features
 
